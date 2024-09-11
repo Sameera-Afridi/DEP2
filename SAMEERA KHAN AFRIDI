@@ -1,0 +1,170 @@
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Main {
+    // DBConnection class to manage the database connection
+    public static class DBConnection {
+        private static final String URL = "jdbc:mysql://localhost:3306/crud_db";
+        private static final String USER = "root"; // Replace with your MySQL username
+        private static final String PASSWORD = "password"; // Replace with your MySQL password
+
+        public static Connection getConnection() {
+            Connection connection = null;
+            try {
+                connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return connection;
+        }
+    }
+
+    // User class to represent the user entity
+    public static class User {
+        private int id;
+        private String name;
+        private String email;
+        private String country;
+
+        public User(String name, String email, String country) {
+            this.name = name;
+            this.email = email;
+            this.country = country;
+        }
+
+        public User(int id, String name, String email, String country) {
+            this.id = id;
+            this.name = name;
+            this.email = email;
+            this.country = country;
+        }
+
+        // Getters and setters
+        public int getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
+
+        @Override
+        public String toString() {
+            return "User [id=" + id + ", name=" + name + ", email=" + email + ", country=" + country + "]";
+        }
+    }
+
+    // UserDAO class for CRUD operations
+    public static class UserDAO {
+
+        // Create a new user
+        public void insertUser(User user) throws SQLException {
+            String sql = "INSERT INTO users (name, email, country) VALUES (?, ?, ?)";
+            try (Connection connection = DBConnection.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, user.getName());
+                statement.setString(2, user.getEmail());
+                statement.setString(3, user.getCountry());
+                statement.executeUpdate();
+            }
+        }
+
+        // Read all users
+        public List<User> selectAllUsers() {
+            List<User> users = new ArrayList<>();
+            String sql = "SELECT * FROM users";
+            try (Connection connection = DBConnection.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+                ResultSet rs = statement.executeQuery();
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String name = rs.getString("name");
+                    String email = rs.getString("email");
+                    String country = rs.getString("country");
+                    users.add(new User(id, name, email, country));
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return users;
+        }
+
+        // Update a user
+        public boolean updateUser(User user) throws SQLException {
+            String sql = "UPDATE users SET name = ?, email = ?, country = ? WHERE id = ?";
+            try (Connection connection = DBConnection.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, user.getName());
+                statement.setString(2, user.getEmail());
+                statement.setString(3, user.getCountry());
+                statement.setInt(4, user.getId());
+                return statement.executeUpdate() > 0;
+            }
+        }
+
+        // Delete a user
+        public boolean deleteUser(int id) throws SQLException {
+            String sql = "DELETE FROM users WHERE id = ?";
+            try (Connection connection = DBConnection.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, id);
+                return statement.executeUpdate() > 0;
+            }
+        }
+    }
+
+    // Main method to test the CRUD operations
+    public static void main(String[] args) {
+        UserDAO userDAO = new UserDAO();
+
+        // Insert a new user
+        try {
+            userDAO.insertUser(new User("John Doe", "john@example.com", "USA"));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Read all users
+        List<User> users = userDAO.selectAllUsers();
+        for (User user : users) {
+            System.out.println(user);
+        }
+
+        // Update a user
+        User userToUpdate = users.get(0); // Get the first user from the list
+        userToUpdate.setName("John Smith");
+        try {
+            userDAO.updateUser(userToUpdate);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Delete a user
+        try {
+            userDAO.deleteUser(userToUpdate.getId());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
