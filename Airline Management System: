@@ -1,0 +1,99 @@
+import java.sql.*;
+
+public class AirlineManagementSystem {
+    
+    public static Connection connect() {
+        Connection conn = null;
+        try {
+            String url = "jdbc:mysql://localhost:3306/airline_system";
+            String user = "root";
+            String password = "";
+            conn = DriverManager.getConnection(url, user, password);
+            System.out.println("Connected to the database!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return conn;
+    }
+    
+    public void insertCustomer(String name, String email, String phone) {
+        String sql = "INSERT INTO customers (name, email, phone) VALUES (?, ?, ?)";
+        try (Connection conn = connect(); 
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, email);
+            pstmt.setString(3, phone);
+            pstmt.executeUpdate();
+            System.out.println("Customer added successfully!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void insertFlight(String flightNumber, String destination, Timestamp departureTime) {
+        String sql = "INSERT INTO flights (flight_number, destination, departure_time) VALUES (?, ?, ?)";
+        try (Connection conn = connect(); 
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, flightNumber);
+            pstmt.setString(2, destination);
+            pstmt.setTimestamp(3, departureTime);
+            pstmt.executeUpdate();
+            System.out.println("Flight added successfully!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void getFlights() {
+        String sql = "SELECT * FROM flights";
+        try (Connection conn = connect(); 
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                System.out.println("Flight ID: " + rs.getInt("flight_id"));
+                System.out.println("Flight Number: " + rs.getString("flight_number"));
+                System.out.println("Destination: " + rs.getString("destination"));
+                System.out.println("Departure Time: " + rs.getTimestamp("departure_time"));
+                System.out.println("------------------------------");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void updateCustomer(int customerId, String newEmail) {
+        String sql = "UPDATE customers SET email = ? WHERE customer_id = ?";
+        try (Connection conn = connect(); 
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, newEmail);
+            pstmt.setInt(2, customerId);
+            pstmt.executeUpdate();
+            System.out.println("Customer email updated successfully!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteCustomer(int customerId) {
+        String sql = "DELETE FROM customers WHERE customer_id = ?";
+        try (Connection conn = connect(); 
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, customerId);
+            pstmt.executeUpdate();
+            System.out.println("Customer deleted successfully!");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        AirlineManagementSystem ams = new AirlineManagementSystem();
+        
+        ams.insertCustomer("John Doe", "johndoe@example.com", "1234567890");
+        ams.insertFlight("PK123", "New York", Timestamp.valueOf("2024-10-25 15:30:00"));
+        ams.getFlights();
+        ams.updateCustomer(1, "newemail@example.com");
+        ams.deleteCustomer(1);
+    }
+}
